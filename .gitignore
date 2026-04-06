@@ -1,0 +1,8 @@
+.DS_Store
+.idea/
+node_modules/
+.pnpm-store/
+dist/
+release/
+*.log
+*.bun-build
