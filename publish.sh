@@ -3,7 +3,7 @@ cd "$(dirname "$0")" || exit 1
 set -e
 
 VERSION=$(jq -r .version package.json)
-TAG="v$VERSION"
+TAG="$VERSION"
 
 # Check for uncommitted changes
 if [ -n "$(git status --porcelain)" ]; then
