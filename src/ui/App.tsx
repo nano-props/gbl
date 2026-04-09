@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { Box, Text, useInput } from 'ink'
+import React, { useState, useEffect } from 'react'
+import { Box, Text, useApp, useInput } from 'ink'
 import Spinner from 'ink-spinner'
 import { Cron } from 'croner'
 import { useAppStore, getConfirmCallback, getInputCallback, selectIsInputBlocked } from '@/store/useAppStore.ts'
@@ -13,7 +13,43 @@ import { Notification } from '@/ui/components/Notification.tsx'
 import { ConfirmDialog } from '@/ui/components/ConfirmDialog.tsx'
 import { InputDialog } from '@/ui/components/InputDialog.tsx'
 
+const MIN_COLS = 80
+const MIN_ROWS = 20
+
+function useTerminalSize() {
+  const [size, setSize] = useState({ cols: process.stdout.columns ?? 80, rows: process.stdout.rows ?? 24 })
+  useEffect(() => {
+    const onResize = () => setSize({ cols: process.stdout.columns, rows: process.stdout.rows })
+    process.stdout.on('resize', onResize)
+    return () => { process.stdout.off('resize', onResize) }
+  }, [])
+  return size
+}
+
 export function App() {
+  const { exit } = useApp()
+  const { cols, rows } = useTerminalSize()
+  const tooSmall = cols < MIN_COLS || rows < MIN_ROWS
+
+  useInput((input) => {
+    if (input === 'q') exit()
+  }, { isActive: tooSmall })
+
+  if (tooSmall) {
+    return (
+      <Box flexDirection="column" paddingX={1} paddingTop={1}>
+        <Text color="yellow">Terminal too small</Text>
+        <Text dimColor>Need at least {MIN_COLS}x{MIN_ROWS}, current {cols}x{rows}</Text>
+        <Text dimColor>Resize your terminal or press q to quit</Text>
+      </Box>
+    )
+  }
+
+  return <AppMain />
+}
+
+function AppMain() {
+  const { exit } = useApp()
   const currentView = useAppStore((s) => s.currentView)
   const branches = useAppStore((s) => s.branches)
   const notification = useAppStore((s) => s.notification)
@@ -24,30 +60,30 @@ export function App() {
   const closeConfirm = useAppStore((s) => s.closeConfirm)
   const closeInput = useAppStore((s) => s.closeInput)
 
-  const currentBranch = useAppStore((s) => s.currentBranch)
   const isInputBlocked = useAppStore(selectIsInputBlocked)
 
   useInput((input) => {
     if (input === 'q' && !isInputBlocked) {
-      process.exit(0)
+      exit()
     }
   })
-
-  useEffect(() => {
-    if (currentBranch) {
-      process.stdout.write(`\x1b]0;GBL(${currentBranch})\x07`)
-    }
-  }, [currentBranch])
 
   useEffect(() => {
     let job: Cron | undefined
     let cancelled = false
     isGitRepo().then((ok) => {
-      if (!ok) {
-        console.error('Not a git repository. Run gbl from inside a git repo.')
-        process.exit(1)
-      }
       if (cancelled) return
+      if (!ok) {
+        // Error message must be printed after terminal is restored.
+        // The 'exit' handler in main.ts restores the alternate screen first (registered earlier),
+        // then this handler prints the error to the now-visible normal screen.
+        process.exitCode = 1
+        process.once('exit', () => {
+          process.stderr.write('Not a git repository. Run gbl from inside a git repo.\n')
+        })
+        exit()
+        return
+      }
       refreshAll({ fetch: true })
       job = new Cron('* * * * *', () => {
         refreshAll({ fetch: true })

@@ -6,6 +6,24 @@ import { App } from '@/ui/App.tsx'
 const VERSION = '1.2.0'
 const DESCRIPTION = 'Git Branch (& Worktree) List'
 
+function isInteractiveTerminal() {
+  return Boolean(process.stdin.isTTY && process.stdout.isTTY && process.env.TERM !== 'dumb')
+}
+
+function formatFatalError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      exitCode: 1,
+      message: `${error.stack ?? error.message}\n`,
+    }
+  }
+
+  return {
+    exitCode: 1,
+    message: `${String(error)}\n`,
+  }
+}
+
 const arg = process.argv[2]
 
 if (arg === '-v' || arg === '--version') {
@@ -35,7 +53,50 @@ Keys:
   process.exit(0)
 }
 
-// Set terminal title (will be updated with branch name by App)
-process.stdout.write('\x1b]0;GBL\x07')
+if (!isInteractiveTerminal()) {
+  process.stderr.write('gbl requires an interactive terminal (TTY).\n')
+  process.exit(1)
+}
 
-render(React.createElement(App))
+// Alternate screen buffer (fullscreen, like top/htop)
+process.stdout.write(
+  '\x1b[?1049h' + // enter alternate screen
+  '\x1b[H'      + // cursor to top-left
+  '\x1b[2J'     + // clear entire screen
+  '\x1b]0;GBL\x07' // terminal title
+)
+
+let restored = false
+function restoreTerminal() {
+  if (restored) return
+  restored = true
+  process.stdout.write(
+    '\x1b[?1049l'   // leave alternate screen
+  )
+}
+
+function exitWithError(error: unknown): never {
+  restoreTerminal()
+  const fatal = formatFatalError(error)
+  process.stderr.write(fatal.message)
+  process.exit(fatal.exitCode)
+}
+
+process.once('exit', restoreTerminal)
+process.once('SIGINT', () => {
+  restoreTerminal()
+  process.exit(130)
+})
+process.once('SIGTERM', () => {
+  restoreTerminal()
+  process.exit(143)
+})
+process.once('uncaughtException', exitWithError)
+process.once('unhandledRejection', exitWithError)
+
+async function main() {
+  const app = render(React.createElement(App))
+  await app.waitUntilExit()
+}
+
+void main().catch(exitWithError)
