@@ -30,7 +30,9 @@ export function Hint({ keys, marginTop = 0 }: HintProps) {
         const symbol = KEY_SYMBOLS[key] ?? KEY_SYMBOLS[key.toLowerCase()] ?? key
         return (
           <Box key={i}>
-            <Text bold color="yellow">{symbol}</Text>
+            <Text bold color="yellow">
+              {symbol}
+            </Text>
             <Text dimColor> {label}</Text>
           </Box>
         )

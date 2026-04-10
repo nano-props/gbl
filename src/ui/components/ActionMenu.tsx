@@ -20,9 +20,18 @@ export function ActionMenu({ items, isOpen, onClose }: ActionMenuProps) {
   useInput((input, key) => {
     if (!isOpen) return
 
-    if (key.escape) { onClose(); return }
-    if (key.upArrow) { setSelectedIndex((i) => Math.max(0, i - 1)); return }
-    if (key.downArrow) { setSelectedIndex((i) => Math.min(items.length - 1, i + 1)); return }
+    if (key.escape) {
+      onClose()
+      return
+    }
+    if (key.upArrow) {
+      setSelectedIndex((i) => Math.max(0, i - 1))
+      return
+    }
+    if (key.downArrow) {
+      setSelectedIndex((i) => Math.min(items.length - 1, i + 1))
+      return
+    }
     if (key.return) {
       items[selectedIndex]?.action()
       onClose()
@@ -42,7 +51,9 @@ export function ActionMenu({ items, isOpen, onClose }: ActionMenuProps) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">Actions</Text>
+        <Text bold color="cyan">
+          Actions
+        </Text>
         <Text dimColor> (arrows/enter to select, or press key directly, esc to close)</Text>
       </Box>
       {items.map((item, i) => {
@@ -50,9 +61,16 @@ export function ActionMenu({ items, isOpen, onClose }: ActionMenuProps) {
         const pointer = isSelected ? '> ' : '  '
         return (
           <Box key={item.key}>
-            <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>{pointer}</Text>
-            <Text color={item.color ?? (isSelected ? 'cyan' : undefined)} bold={isSelected}>[{item.key}]</Text>
-            <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}> {item.label}</Text>
+            <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>
+              {pointer}
+            </Text>
+            <Text color={item.color ?? (isSelected ? 'cyan' : undefined)} bold={isSelected}>
+              [{item.key}]
+            </Text>
+            <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>
+              {' '}
+              {item.label}
+            </Text>
           </Box>
         )
       })}

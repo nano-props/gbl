@@ -35,7 +35,10 @@ export function BranchItem({ branch, isSelected }: BranchItemProps) {
     <Box>
       <Text color={pointerColor}>{pointer} </Text>
       <Text color={markColor}>{branchMark}</Text>
-      <Text color={nameColor} bold={branch.isCurrent}> {branch.name}</Text>
+      <Text color={nameColor} bold={branch.isCurrent}>
+        {' '}
+        {branch.name}
+      </Text>
       <Text> </Text>
       <Text color={syncColor}>{syncInfo}</Text>
     </Box>

@@ -12,7 +12,9 @@ export function StashItem({ stash, isSelected }: StashItemProps) {
 
   return (
     <Box>
-      <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>{pointer}</Text>
+      <Text color={isSelected ? 'cyan' : undefined} bold={isSelected}>
+        {pointer}
+      </Text>
       <Text color="yellow">stash@{'{' + stash.index + '}'}</Text>
       <Text> {stash.message || '(no message)'}</Text>
     </Box>

@@ -25,7 +25,12 @@ export function StashesView() {
   const selectedStash = stashes[selectedStashIndex] ?? null
 
   const doSave = useCallback(() => {
-    showInput('Save Stash', 'Stash message (optional, press Enter to skip)', (message: string) => doStashSave(message || undefined), { allowEmpty: true })
+    showInput(
+      'Save Stash',
+      'Stash message (optional, press Enter to skip)',
+      (message: string) => doStashSave(message || undefined),
+      { allowEmpty: true },
+    )
   }, [showInput, doStashSave])
 
   const doPop = useCallback(() => {
@@ -33,38 +38,67 @@ export function StashesView() {
   }, [selectedStash, doStashPop])
 
   const doDrop = useCallback(() => {
-    if (selectedStash) showConfirm('Drop Stash', `Drop stash@{${selectedStash.index}}: "${selectedStash.message}"? This cannot be undone.`, () => doStashDrop(selectedStash.index))
+    if (selectedStash)
+      showConfirm(
+        'Drop Stash',
+        `Drop stash@{${selectedStash.index}}: "${selectedStash.message}"? This cannot be undone.`,
+        () => doStashDrop(selectedStash.index),
+      )
   }, [selectedStash, showConfirm, doStashDrop])
 
-  const actionItems = useMemo((): ActionItem[] => [
-    { key: 's', label: 'Save stash', action: doSave },
-    { key: 'a', label: 'Apply (pop)', action: doPop },
-    { key: 'd', label: 'Drop stash', color: 'red', action: doDrop },
-  ], [doSave, doPop, doDrop])
+  const actionItems = useMemo(
+    (): ActionItem[] => [
+      { key: 's', label: 'Save stash', action: doSave },
+      { key: 'a', label: 'Apply (pop)', action: doPop },
+      { key: 'd', label: 'Drop stash', color: 'red', action: doDrop },
+    ],
+    [doSave, doPop, doDrop],
+  )
 
   useInput((input, key) => {
     if (menuOpen) return
-    if (key.upArrow) { moveStashSelection(-1); return }
-    if (key.downArrow) { moveStashSelection(1); return }
+    if (key.upArrow) {
+      moveStashSelection(-1)
+      return
+    }
+    if (key.downArrow) {
+      moveStashSelection(1)
+      return
+    }
     if (isInputBlocked) return
 
-    if (key.escape) { setCurrentView('branches'); return }
-    if (key.tab) { setMenuOpen(true); return }
-    if (input === 's') { doSave(); return }
-    if (input === 'a') { doPop(); return }
-    if (input === 'd') { doDrop(); return }
+    if (key.escape) {
+      setCurrentView('branches')
+      return
+    }
+    if (key.tab) {
+      setMenuOpen(true)
+      return
+    }
+    if (input === 's') {
+      doSave()
+      return
+    }
+    if (input === 'a') {
+      doPop()
+      return
+    }
+    if (input === 'd') {
+      doDrop()
+      return
+    }
   })
 
   return (
     <Box flexDirection="column" paddingX={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">Stashes ({stashes.length})</Text>
+        <Text bold color="cyan">
+          Stashes ({stashes.length})
+        </Text>
       </Box>
 
       <Box flexDirection="column">
-        {stashes.length === 0 && (
-          <Text dimColor>No stashes found. Press s to save a new stash.</Text>
-        )}
+        {stashes.length === 0 && <Text dimColor>No stashes found. Press s to save a new stash.</Text>}
         {stashes.map((stash, i) => (
           <StashItem key={stash.index} stash={stash} isSelected={i === selectedStashIndex} />
         ))}
@@ -77,14 +111,17 @@ export function StashesView() {
       ) : (
         <>
           {selectedStash && <StashDetail stash={selectedStash} />}
-          <Hint marginTop={1} keys={[
-            { key: 'esc', label: 'back' },
-            { key: 's', label: 'save' },
-            { key: 'a', label: 'pop' },
-            { key: 'd', label: 'drop' },
-            { key: 'tab', label: 'actions' },
-            { key: 'q', label: 'quit' },
-          ]} />
+          <Hint
+            marginTop={1}
+            keys={[
+              { key: 'esc', label: 'back' },
+              { key: 's', label: 'save' },
+              { key: 'a', label: 'pop' },
+              { key: 'd', label: 'drop' },
+              { key: 'tab', label: 'actions' },
+              { key: 'q', label: 'quit' },
+            ]}
+          />
         </>
       )}
     </Box>

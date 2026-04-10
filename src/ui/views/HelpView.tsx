@@ -66,15 +66,23 @@ export function HelpView() {
   return (
     <Box flexDirection="column" paddingX={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">Help - Keybindings</Text>
+        <Text bold color="cyan">
+          Help - Keybindings
+        </Text>
       </Box>
 
       {CATEGORIES.map((cat) => (
         <Box key={cat.title} flexDirection="column" marginBottom={1}>
-          <Text bold color={cat.color}>{cat.title}</Text>
+          <Text bold color={cat.color}>
+            {cat.title}
+          </Text>
           {cat.bindings.map(([key, desc]) => (
             <Box key={key + desc}>
-              <Box width={12}><Text bold color="yellow">{key}</Text></Box>
+              <Box width={12}>
+                <Text bold color="yellow">
+                  {key}
+                </Text>
+              </Box>
               <Text>{desc}</Text>
             </Box>
           ))}

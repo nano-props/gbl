@@ -24,7 +24,9 @@ export function SearchBar() {
 
   return (
     <Box>
-      <Text color="yellow" bold>/ </Text>
+      <Text color="yellow" bold>
+        /{' '}
+      </Text>
       <Text color="green">{searchQuery}</Text>
       <Text backgroundColor="white"> </Text>
       {!searchQuery && <Text dimColor> type to filter branches...</Text>}

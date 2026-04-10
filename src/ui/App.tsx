@@ -17,11 +17,16 @@ const MIN_COLS = 80
 const MIN_ROWS = 20
 
 function useTerminalSize() {
-  const [size, setSize] = useState({ cols: process.stdout.columns ?? 80, rows: process.stdout.rows ?? 24 })
+  const [size, setSize] = useState({
+    cols: process.stdout.columns ?? 80,
+    rows: process.stdout.rows ?? 24,
+  })
   useEffect(() => {
     const onResize = () => setSize({ cols: process.stdout.columns, rows: process.stdout.rows })
     process.stdout.on('resize', onResize)
-    return () => { process.stdout.off('resize', onResize) }
+    return () => {
+      process.stdout.off('resize', onResize)
+    }
   }, [])
   return size
 }
@@ -31,15 +36,20 @@ export function App() {
   const { cols, rows } = useTerminalSize()
   const tooSmall = cols < MIN_COLS || rows < MIN_ROWS
 
-  useInput((input) => {
-    if (input === 'q') exit()
-  }, { isActive: tooSmall })
+  useInput(
+    (input) => {
+      if (input === 'q') exit()
+    },
+    { isActive: tooSmall },
+  )
 
   if (tooSmall) {
     return (
       <Box flexDirection="column" paddingX={1} paddingTop={1}>
         <Text color="yellow">Terminal too small</Text>
-        <Text dimColor>Need at least {MIN_COLS}x{MIN_ROWS}, current {cols}x{rows}</Text>
+        <Text dimColor>
+          Need at least {MIN_COLS}x{MIN_ROWS}, current {cols}x{rows}
+        </Text>
         <Text dimColor>Resize your terminal or press q to quit</Text>
       </Box>
     )
@@ -68,6 +78,13 @@ function AppMain() {
     }
   })
 
+  const currentBranch = useAppStore((s) => s.currentBranch)
+  useEffect(() => {
+    if (currentBranch) {
+      process.stdout.write(`\x1b]0;GBL(${currentBranch})\x07`)
+    }
+  }, [currentBranch])
+
   useEffect(() => {
     let job: Cron | undefined
     let cancelled = false
@@ -89,16 +106,24 @@ function AppMain() {
         refreshAll({ fetch: true })
       })
     })
-    return () => { cancelled = true; job?.stop() }
+    return () => {
+      cancelled = true
+      job?.stop()
+    }
   }, [])
 
   const renderView = () => {
     switch (currentView) {
-      case 'branches': return <BranchesView />
-      case 'worktrees': return <WorktreesView />
-      case 'stashes': return <StashesView />
-      case 'cleanup': return <CleanupView />
-      case 'help': return <HelpView />
+      case 'branches':
+        return <BranchesView />
+      case 'worktrees':
+        return <WorktreesView />
+      case 'stashes':
+        return <StashesView />
+      case 'cleanup':
+        return <CleanupView />
+      case 'help':
+        return <HelpView />
     }
   }
 
@@ -107,11 +132,18 @@ function AppMain() {
       {/* Header */}
       <Box paddingX={1} marginBottom={1} justifyContent="space-between">
         <Box>
-          <Text bold color="cyan">GBL</Text>
+          <Text bold color="cyan">
+            GBL
+          </Text>
           <Text dimColor> - Git Branch ({'&'} Worktree) List</Text>
         </Box>
         {busyMessage ? (
-          <Text dimColor><Text color="cyan"><Spinner type="dots" /></Text> {busyMessage}</Text>
+          <Text dimColor>
+            <Text color="cyan">
+              <Spinner type="dots" />
+            </Text>{' '}
+            {busyMessage}
+          </Text>
         ) : notification ? (
           <Notification type={notification.type} message={notification.message} />
         ) : null}
@@ -120,7 +152,9 @@ function AppMain() {
       {/* Main View */}
       {branches.length === 0 ? (
         <Box paddingX={1}>
-          <Text color="cyan"><Spinner type="dots" /></Text>
+          <Text color="cyan">
+            <Spinner type="dots" />
+          </Text>
         </Box>
       ) : (
         renderView()
@@ -132,7 +166,10 @@ function AppMain() {
           <ConfirmDialog
             title={confirmDialog.title}
             message={confirmDialog.message}
-            onConfirm={() => { getConfirmCallback()?.(); closeConfirm() }}
+            onConfirm={() => {
+              getConfirmCallback()?.()
+              closeConfirm()
+            }}
             onCancel={closeConfirm}
           />
         </Box>
@@ -147,7 +184,11 @@ function AppMain() {
             placeholder={inputDialog.placeholder}
             allowEmpty={inputDialog.allowEmpty}
             defaultValue={inputDialog.defaultValue}
-            onSubmit={(value) => { const cb = getInputCallback(); closeInput(); cb?.(value) }}
+            onSubmit={(value) => {
+              const cb = getInputCallback()
+              closeInput()
+              cb?.(value)
+            }}
             onCancel={closeInput}
           />
         </Box>

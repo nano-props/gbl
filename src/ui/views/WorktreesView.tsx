@@ -21,11 +21,20 @@ export function WorktreesView() {
   const selectedWorktree = worktrees[selectedWorktreeIndex] ?? null
 
   useInput((input, key) => {
-    if (key.upArrow) { moveWorktreeSelection(-1); return }
-    if (key.downArrow) { moveWorktreeSelection(1); return }
+    if (key.upArrow) {
+      moveWorktreeSelection(-1)
+      return
+    }
+    if (key.downArrow) {
+      moveWorktreeSelection(1)
+      return
+    }
     if (isInputBlocked) return
 
-    if (key.escape) { setCurrentView('branches'); return }
+    if (key.escape) {
+      setCurrentView('branches')
+      return
+    }
 
     if (input === 'd') {
       if (!selectedWorktree || selectedWorktree.isMainWorktree) return
@@ -34,13 +43,22 @@ export function WorktreesView() {
         return
       }
       if (selectedWorktree.isDirty) {
-        showConfirm('Remove Dirty Worktree', `Worktree at "${selectedWorktree.path}" has uncommitted changes. Force remove?`, () => doRemoveWorktree(selectedWorktree.path, true))
+        showConfirm(
+          'Remove Dirty Worktree',
+          `Worktree at "${selectedWorktree.path}" has uncommitted changes. Force remove?`,
+          () => doRemoveWorktree(selectedWorktree.path, true),
+        )
       } else {
-        showConfirm('Remove Worktree', `Remove worktree at "${selectedWorktree.path}"?`, () => doRemoveWorktree(selectedWorktree.path))
+        showConfirm('Remove Worktree', `Remove worktree at "${selectedWorktree.path}"?`, () =>
+          doRemoveWorktree(selectedWorktree.path),
+        )
       }
       return
     }
-    if (input === 'p') { doPruneWorktrees(); return }
+    if (input === 'p') {
+      doPruneWorktrees()
+      return
+    }
     if (input === 'o') {
       if (selectedWorktree) {
         open(selectedWorktree.path).catch(() => showNotification('error', 'Failed to open directory'))
@@ -52,7 +70,9 @@ export function WorktreesView() {
   return (
     <Box flexDirection="column" paddingX={1}>
       <Box marginBottom={1}>
-        <Text bold color="cyan">All Worktrees ({worktrees.length})</Text>
+        <Text bold color="cyan">
+          All Worktrees ({worktrees.length})
+        </Text>
       </Box>
 
       <Box flexDirection="column">
@@ -63,13 +83,16 @@ export function WorktreesView() {
       </Box>
 
       {selectedWorktree && <WorktreeDetail worktree={selectedWorktree} />}
-      <Hint marginTop={1} keys={[
-        { key: 'esc', label: 'back' },
-        { key: 'd', label: 'remove' },
-        { key: 'p', label: 'prune' },
-        { key: 'o', label: 'open' },
-        { key: 'q', label: 'quit' },
-      ]} />
+      <Hint
+        marginTop={1}
+        keys={[
+          { key: 'esc', label: 'back' },
+          { key: 'd', label: 'remove' },
+          { key: 'p', label: 'prune' },
+          { key: 'o', label: 'open' },
+          { key: 'q', label: 'quit' },
+        ]}
+      />
     </Box>
   )
 }

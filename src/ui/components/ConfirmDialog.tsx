@@ -16,13 +16,19 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel }: ConfirmDi
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1}>
-      <Text bold color="yellow">{title}</Text>
+      <Text bold color="yellow">
+        {title}
+      </Text>
       <Text>{message}</Text>
       <Box marginTop={1}>
         <Text dimColor>Press </Text>
-        <Text color="green" bold>y</Text>
+        <Text color="green" bold>
+          y
+        </Text>
         <Text dimColor> to confirm, </Text>
-        <Text color="red" bold>n</Text>
+        <Text color="red" bold>
+          n
+        </Text>
         <Text dimColor> to cancel</Text>
       </Box>
     </Box>

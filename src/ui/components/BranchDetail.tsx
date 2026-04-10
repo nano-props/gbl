@@ -17,8 +17,8 @@ export function shortenPath(p: string, maxLen = 60): string {
 export function statusLabel(x: string, y: string): { text: string; color: string } {
   if (x === '?' || y === '?') return { text: '??', color: 'gray' }
   if (x === 'D' || y === 'D') return { text: 'D ', color: 'red' }
-  if (x === 'A')              return { text: 'A ', color: 'green' }
-  if (x === 'R')              return { text: 'R ', color: 'yellow' }
+  if (x === 'A') return { text: 'A ', color: 'green' }
+  if (x === 'R') return { text: 'R ', color: 'yellow' }
   if (x === 'M' || y === 'M') return { text: 'M ', color: 'yellow' }
   return { text: `${x}${y}`, color: 'red' }
 }
@@ -37,28 +37,34 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
 
   useInput((input) => {
     if (isInputBlocked) return
-    if (input === 'e' && !showLog && (branch.isCurrent || branch.worktreePath) ) {
+    if (input === 'e' && !showLog && (branch.isCurrent || branch.worktreePath)) {
       setChangesExpanded((v) => !v)
     }
   })
 
   const changes = branch.isCurrent
     ? status
-    : worktrees?.find((w) => w.path === branch.worktreePath)?.statusFiles ?? []
+    : (worktrees?.find((w) => w.path === branch.worktreePath)?.statusFiles ?? [])
 
   return (
     <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1} marginTop={1}>
       <Box>
-        <Text bold color="cyan">Branch: </Text>
+        <Text bold color="cyan">
+          Branch:{' '}
+        </Text>
         <Text bold>{branch.name}</Text>
       </Box>
       <Box>
-        <Text bold color="cyan">Commit: </Text>
+        <Text bold color="cyan">
+          Commit:{' '}
+        </Text>
         <Text color="yellow">{branch.lastCommitHash}</Text>
         <Text> {branch.lastCommitMessage}</Text>
       </Box>
       <Box>
-        <Text bold color="cyan">Author: </Text>
+        <Text bold color="cyan">
+          Author:{' '}
+        </Text>
         <Text>{branch.lastCommitAuthor}</Text>
         <Text dimColor> ({branch.lastCommitDate})</Text>
       </Box>
@@ -66,12 +72,17 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
       {/* Tracking info */}
       {branch.tracking && (
         <Box>
-          <Text bold color="cyan">Track:  </Text>
+          <Text bold color="cyan">
+            Track:{' '}
+          </Text>
           <Text>{branch.tracking}</Text>
           {branch.trackingGone ? (
             <Text color="yellow"> (remote gone)</Text>
-          ) : (branch.ahead > 0 || branch.behind > 0) ? (
-            <Text color="yellow"> (ahead {branch.ahead}, behind {branch.behind})</Text>
+          ) : branch.ahead > 0 || branch.behind > 0 ? (
+            <Text color="yellow">
+              {' '}
+              (ahead {branch.ahead}, behind {branch.behind})
+            </Text>
           ) : (
             <Text color="green"> (up to date)</Text>
           )}
@@ -79,7 +90,9 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
       )}
       {!branch.tracking && !branch.isRemote && (
         <Box>
-          <Text bold color="cyan">Track:  </Text>
+          <Text bold color="cyan">
+            Track:{' '}
+          </Text>
           <Text color="yellow">no remote tracking branch</Text>
         </Box>
       )}
@@ -87,7 +100,9 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
       {/* Worktree info */}
       {branch.worktreePath && (
         <Box>
-          <Text bold color="cyan">Wktree: </Text>
+          <Text bold color="cyan">
+            Wktree:{' '}
+          </Text>
           <Text color="magenta">{branch.worktreePath}</Text>
         </Box>
       )}
@@ -96,7 +111,9 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
       {showLog ? (
         logEntries.length > 0 && (
           <Box flexDirection="column" marginTop={1}>
-            <Text bold color="cyan">Recent commits:</Text>
+            <Text bold color="cyan">
+              Recent commits:
+            </Text>
             {logEntries.slice(0, 5).map((entry, i) => (
               <Box key={i}>
                 <Text color="yellow"> {entry.shortHash}</Text>
@@ -108,18 +125,26 @@ export function BranchDetail({ branch, status, logEntries, showLog, worktrees }:
         )
       ) : changes.length > 0 ? (
         <Box flexDirection="column" marginTop={1}>
-          <Text bold color="cyan">Changes ({changes.length}):{changes.length > CHANGES_COLLAPSED_LIMIT && <Text dimColor> [e: {changesExpanded ? 'collapse' : 'expand'}]</Text>}</Text>
+          <Text bold color="cyan">
+            Changes ({changes.length}):
+            {changes.length > CHANGES_COLLAPSED_LIMIT && (
+              <Text dimColor> [e: {changesExpanded ? 'collapse' : 'expand'}]</Text>
+            )}
+          </Text>
           {(changesExpanded ? changes : changes.slice(0, CHANGES_COLLAPSED_LIMIT)).map((entry, i) => {
             const label = statusLabel(entry.x, entry.y)
             return (
-              <Text key={i}><Text color={label.color}> {label.text} </Text><Text>{shortenPath(entry.path)}</Text></Text>
+              <Text key={i}>
+                <Text color={label.color}> {label.text} </Text>
+                <Text>{shortenPath(entry.path)}</Text>
+              </Text>
             )
           })}
           {!changesExpanded && changes.length > CHANGES_COLLAPSED_LIMIT && (
-            <Text dimColor>  ... and {changes.length - CHANGES_COLLAPSED_LIMIT} more</Text>
+            <Text dimColor> ... and {changes.length - CHANGES_COLLAPSED_LIMIT} more</Text>
           )}
         </Box>
-      ) : (branch.isCurrent || branch.worktreePath) ? (
+      ) : branch.isCurrent || branch.worktreePath ? (
         <Box marginTop={1}>
           <Text color="green">Working tree clean</Text>
         </Box>

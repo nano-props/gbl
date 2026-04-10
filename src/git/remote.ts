@@ -1,10 +1,10 @@
-import { git, gitResult } from "./helper.ts"
-import type { ExecResult } from "./helper.ts"
-import { getCurrentBranch } from "./branches.ts"
+import { git, gitResult } from './helper.ts'
+import type { ExecResult } from './helper.ts'
+import { getCurrentBranch } from './branches.ts'
 
 export async function getGitHubUrl(): Promise<string | null> {
   try {
-    const url = await git(["remote", "get-url", "origin"])
+    const url = await git(['remote', 'get-url', 'origin'])
     if (!url) return null
 
     const sshMatch = url.match(/^git@(.+?):(.+?)(?:\.git)?$/)
@@ -38,29 +38,24 @@ export async function getCurrentPRUrl(): Promise<string | null> {
 }
 
 export async function fetchAll(): Promise<ExecResult> {
-  return gitResult("fetch", "--all", "--prune")
+  return gitResult('fetch', '--all', '--prune')
 }
 
-export async function pullBranch(
-  branch: string,
-  isCurrent: boolean,
-): Promise<ExecResult> {
+export async function pullBranch(branch: string, isCurrent: boolean): Promise<ExecResult> {
   if (isCurrent) {
-    return gitResult("pull", "origin", branch)
+    return gitResult('pull', 'origin', branch)
   }
-  return gitResult("fetch", "origin", `${branch}:${branch}`)
+  return gitResult('fetch', 'origin', `${branch}:${branch}`)
 }
 
-export async function pushBranch(
-  branch: string,
-): Promise<ExecResult> {
-  return gitResult("push", "-u", "origin", branch)
+export async function pushBranch(branch: string): Promise<ExecResult> {
+  return gitResult('push', '-u', 'origin', branch)
 }
 
 export async function abortMerge(): Promise<ExecResult> {
-  return gitResult("merge", "--abort")
+  return gitResult('merge', '--abort')
 }
 
 export async function abortRebase(): Promise<ExecResult> {
-  return gitResult("rebase", "--abort")
+  return gitResult('rebase', '--abort')
 }

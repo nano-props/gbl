@@ -23,17 +23,19 @@ export function InputDialog({ title, placeholder, onSubmit, onCancel, allowEmpty
       return
     }
     if (key.backspace || key.delete) {
-      setValue(v => v.slice(0, -1))
+      setValue((v) => v.slice(0, -1))
       return
     }
     if (input && !key.ctrl && !key.meta) {
-      setValue(v => v + input)
+      setValue((v) => v + input)
     }
   })
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
-      <Text bold color="cyan">{title}</Text>
+      <Text bold color="cyan">
+        {title}
+      </Text>
       <Box marginTop={1}>
         <Text color="green">{value}</Text>
         <Text backgroundColor="white"> </Text>

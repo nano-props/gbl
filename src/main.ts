@@ -61,9 +61,9 @@ if (!isInteractiveTerminal()) {
 // Alternate screen buffer (fullscreen, like top/htop)
 process.stdout.write(
   '\x1b[?1049h' + // enter alternate screen
-  '\x1b[H'      + // cursor to top-left
-  '\x1b[2J'     + // clear entire screen
-  '\x1b]0;GBL\x07' // terminal title
+    '\x1b[H' + // cursor to top-left
+    '\x1b[2J' + // clear entire screen
+    '\x1b]0;GBL\x07', // terminal title
 )
 
 let restored = false
@@ -71,7 +71,7 @@ function restoreTerminal() {
   if (restored) return
   restored = true
   process.stdout.write(
-    '\x1b[?1049l'   // leave alternate screen
+    '\x1b[?1049l', // leave alternate screen
   )
 }
 

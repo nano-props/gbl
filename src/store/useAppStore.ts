@@ -1,12 +1,6 @@
 import { create } from 'zustand'
 import { debounce } from 'lodash-es'
-import type {
-  BranchInfo,
-  StatusEntry,
-  WorktreeInfo,
-  StashEntry,
-  LogEntry,
-} from '@/git/index.ts'
+import type { BranchInfo, StatusEntry, WorktreeInfo, StashEntry, LogEntry } from '@/git/index.ts'
 import {
   getBranches,
   getStatus,
@@ -120,7 +114,11 @@ export interface AppState {
   doFetchAll: () => Promise<void>
 
   // Actions - worktree operations
-  doAddWorktree: (path: string, branch: string, options?: { createBranch?: boolean; startPoint?: string }) => Promise<void>
+  doAddWorktree: (
+    path: string,
+    branch: string,
+    options?: { createBranch?: boolean; startPoint?: string },
+  ) => Promise<void>
   doRemoveWorktree: (path: string, force?: boolean) => Promise<void>
   doMoveWorktree: (oldPath: string, newPath: string) => Promise<void>
   doPruneWorktrees: () => Promise<void>
@@ -138,7 +136,12 @@ export interface AppState {
   clearNotification: () => void
   showConfirm: (title: string, message: string, onConfirm: () => void) => void
   closeConfirm: () => void
-  showInput: (title: string, placeholder: string, onSubmit: (value: string) => void, options?: { allowEmpty?: boolean; defaultValue?: string }) => void
+  showInput: (
+    title: string,
+    placeholder: string,
+    onSubmit: (value: string) => void,
+    options?: { allowEmpty?: boolean; defaultValue?: string },
+  ) => void
   closeInput: () => void
   setMenuOpen: (open: boolean) => void
 }
@@ -238,15 +241,15 @@ export const useAppStore = create<AppState>()((set, get) => {
       const showBusy = opts?.fetch && !get().notification
       if (showBusy) set({ busyMessage: 'Fetching remotes...' })
       if (opts?.fetch) {
-        try { await fetchAll() } catch { /* ignore fetch errors */ }
+        try {
+          await fetchAll()
+        } catch {
+          /* ignore fetch errors */
+        }
       }
 
       // Fetch all data in parallel, then apply in a single set()
-      const [worktrees, status, stashes] = await Promise.all([
-        getWorktrees(),
-        getStatus(),
-        getStashes(),
-      ])
+      const [worktrees, status, stashes] = await Promise.all([getWorktrees(), getStatus(), getStashes()])
       const branches = await getBranches(worktrees)
       const currentBranch = branches.find((b) => b.isCurrent)?.name ?? ''
 
@@ -268,9 +271,7 @@ export const useAppStore = create<AppState>()((set, get) => {
 
       const filtered = filterBranches(branches, searchQuery)
       const idx = clamp(selectedBranchIndex, 0, Math.max(0, filtered.length - 1))
-      const logEntries = filtered.length > 0
-        ? await getLog(filtered[idx]!.name, 15)
-        : []
+      const logEntries = filtered.length > 0 ? await getLog(filtered[idx]!.name, 15) : []
 
       set({ worktrees, status, stashes, branches, currentBranch, selectedBranchIndex, logEntries, busyMessage: null })
     },
@@ -360,7 +361,9 @@ export const useAppStore = create<AppState>()((set, get) => {
         get().showNotification('success', `Deleted branch "${name}"`)
         await get().refreshAll()
       } else if (!force && result.message.includes('not fully merged')) {
-        get().showConfirm('Force Delete', `Branch "${name}" is not fully merged. Force delete?`, () => get().doDeleteBranch(name, true))
+        get().showConfirm('Force Delete', `Branch "${name}" is not fully merged. Force delete?`, () =>
+          get().doDeleteBranch(name, true),
+        )
       } else {
         get().showNotification('error', `Delete failed: ${result.message}`)
         await get().refreshAll()
@@ -368,119 +371,75 @@ export const useAppStore = create<AppState>()((set, get) => {
     },
 
     async doDeleteRemoteBranch(name) {
-      await runAction(
-        () => deleteRemoteBranch(name),
-        `Deleted remote branch "${name}"`,
-        'Delete remote failed',
-        { busyMsg: `Deleting remote "${name}"...` },
-      )
+      await runAction(() => deleteRemoteBranch(name), `Deleted remote branch "${name}"`, 'Delete remote failed', {
+        busyMsg: `Deleting remote "${name}"...`,
+      })
     },
 
     async doPull(branch) {
       const isCurrent = branch === get().currentBranch
-      await runAction(
-        () => pullBranch(branch, isCurrent),
-        `Pulled "${branch}"`,
-        'Pull failed',
-        { busyMsg: `Pulling "${branch}"...` },
-      )
+      await runAction(() => pullBranch(branch, isCurrent), `Pulled "${branch}"`, 'Pull failed', {
+        busyMsg: `Pulling "${branch}"...`,
+      })
     },
 
     async doPush(branch) {
-      await runAction(
-        () => pushBranch(branch),
-        `Pushed "${branch}"`,
-        'Push failed',
-        { busyMsg: `Pushing "${branch}"...`, fetch: true },
-      )
+      await runAction(() => pushBranch(branch), `Pushed "${branch}"`, 'Push failed', {
+        busyMsg: `Pushing "${branch}"...`,
+        fetch: true,
+      })
     },
 
     async doCheckout(name) {
-      await runAction(
-        () => checkoutBranch(name),
-        `Checked out "${name}"`,
-        'Checkout failed',
-        { busyMsg: `Checking out "${name}"...` },
-      )
+      await runAction(() => checkoutBranch(name), `Checked out "${name}"`, 'Checkout failed', {
+        busyMsg: `Checking out "${name}"...`,
+      })
     },
 
     async doCreateBranch(name, startPoint) {
-      await runAction(
-        () => createBranch(name, startPoint),
-        `Created branch "${name}"`,
-        'Create failed',
-        { busyMsg: `Creating branch "${name}"...` },
-      )
+      await runAction(() => createBranch(name, startPoint), `Created branch "${name}"`, 'Create failed', {
+        busyMsg: `Creating branch "${name}"...`,
+      })
     },
 
     async doRenameBranch(oldName, newName) {
-      await runAction(
-        () => renameBranch(oldName, newName),
-        `Renamed "${oldName}" to "${newName}"`,
-        'Rename failed',
-        { busyMsg: `Renaming "${oldName}"...` },
-      )
+      await runAction(() => renameBranch(oldName, newName), `Renamed "${oldName}" to "${newName}"`, 'Rename failed', {
+        busyMsg: `Renaming "${oldName}"...`,
+      })
     },
 
     async doMerge(branch) {
-      await runAction(
-        () => mergeBranch(branch),
-        `Merged "${branch}"`,
-        'Merge failed',
-        { busyMsg: `Merging "${branch}"...` },
-      )
+      await runAction(() => mergeBranch(branch), `Merged "${branch}"`, 'Merge failed', {
+        busyMsg: `Merging "${branch}"...`,
+      })
     },
 
     async doRebase(branch) {
-      await runAction(
-        () => rebaseBranch(branch),
-        `Rebased onto "${branch}"`,
-        'Rebase failed',
-        { busyMsg: `Rebasing onto "${branch}"...` },
-      )
+      await runAction(() => rebaseBranch(branch), `Rebased onto "${branch}"`, 'Rebase failed', {
+        busyMsg: `Rebasing onto "${branch}"...`,
+      })
     },
 
     async doFetchAll() {
-      await runAction(
-        () => fetchAll(),
-        'Fetched all remotes',
-        'Fetch failed',
-        { busyMsg: 'Fetching all remotes...' },
-      )
+      await runAction(() => fetchAll(), 'Fetched all remotes', 'Fetch failed', { busyMsg: 'Fetching all remotes...' })
     },
 
     // -- Worktree operations --------------------------------------------------
 
     async doAddWorktree(path, branch, options) {
-      await runAction(
-        () => addWorktree(path, branch, options),
-        `Added worktree at "${path}"`,
-        'Add worktree failed',
-      )
+      await runAction(() => addWorktree(path, branch, options), `Added worktree at "${path}"`, 'Add worktree failed')
     },
 
     async doRemoveWorktree(path, force) {
-      await runAction(
-        () => removeWorktree(path, force),
-        `Removed worktree at "${path}"`,
-        'Remove worktree failed',
-      )
+      await runAction(() => removeWorktree(path, force), `Removed worktree at "${path}"`, 'Remove worktree failed')
     },
 
     async doMoveWorktree(oldPath, newPath) {
-      await runAction(
-        () => moveWorktree(oldPath, newPath),
-        `Moved worktree to "${newPath}"`,
-        'Move worktree failed',
-      )
+      await runAction(() => moveWorktree(oldPath, newPath), `Moved worktree to "${newPath}"`, 'Move worktree failed')
     },
 
     async doPruneWorktrees() {
-      await runAction(
-        () => pruneWorktrees(),
-        'Pruned stale worktrees',
-        'Prune failed',
-      )
+      await runAction(() => pruneWorktrees(), 'Pruned stale worktrees', 'Prune failed')
     },
 
     // -- Stash operations -----------------------------------------------------
@@ -502,11 +461,7 @@ export const useAppStore = create<AppState>()((set, get) => {
     },
 
     async doStashDrop(index) {
-      await runAction(
-        () => stashDrop(index),
-        `Dropped stash @{${index}}`,
-        'Stash drop failed',
-      )
+      await runAction(() => stashDrop(index), `Dropped stash @{${index}}`, 'Stash drop failed')
     },
 
     // -- Cleanup --------------------------------------------------------------
