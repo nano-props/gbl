@@ -4,7 +4,7 @@ import { render } from 'ink'
 import { App } from '@/ui/App.tsx'
 
 const VERSION = '1.2.0'
-const DESCRIPTION = 'Git Branch (& Worktree) List'
+const DESCRIPTION = 'Git Branch List'
 
 function isInteractiveTerminal() {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY && process.env.TERM !== 'dumb')

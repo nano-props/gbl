@@ -1,6 +1,6 @@
 # gbl
 
-Git Branch (& Worktree) List.
+Git Branch List.
 
 ## Development
 

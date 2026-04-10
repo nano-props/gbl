@@ -1,14 +1,19 @@
 {
   "name": "gbl",
   "version": "1.2.0",
-  "description": "Git Branch (& Worktree) List",
+  "description": "Git Branch List",
   "main": "",
   "scripts": {
     "start": "bun src/main.ts",
     "build": "bun build src/main.ts --compile --outfile dist/gbl",
     "clean": "rm -rf dist .*.bun-build"
   },
-  "keywords": ["git", "tui", "branch", "worktree"],
+  "keywords": [
+    "git",
+    "tui",
+    "branch",
+    "worktree"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",

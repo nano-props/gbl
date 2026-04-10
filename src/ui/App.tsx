@@ -135,7 +135,7 @@ function AppMain() {
           <Text bold color="cyan">
             GBL
           </Text>
-          <Text dimColor> - Git Branch ({'&'} Worktree) List</Text>
+          <Text dimColor> - Git Branch List</Text>
         </Box>
         {busyMessage ? (
           <Text dimColor>
