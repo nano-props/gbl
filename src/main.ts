@@ -2,9 +2,10 @@
 import React from 'react'
 import { render } from 'ink'
 import { App } from '@/ui/App.tsx'
+import pkg from '../package.json'
 
-const VERSION = '1.2.0'
-const DESCRIPTION = 'Git Branch List'
+const VERSION = pkg.version
+const DESCRIPTION = pkg.description
 
 function isInteractiveTerminal() {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY && process.env.TERM !== 'dumb')
@@ -42,14 +43,16 @@ Options:
 
 Keys:
   ↑/↓            Navigate branches
-  Enter           Checkout branch
-  Tab             Open action menu
-  p / P           Pull / Push
-  w               Worktree operations
-  /               Search branches
-  l               Toggle commit log
-  ?               Help
-  q               Quit`)
+  PgUp/PgDn      Jump one page
+  Home/End       Jump to first / last branch
+  Enter          Checkout branch
+  p / P          Pull / Push
+  f              Fetch all remotes
+  g              Open GitHub repo in browser
+  l              Toggle commit log
+  s              Toggle git status
+  ?              Help
+  q              Quit`)
   process.exit(0)
 }
 
@@ -97,6 +100,9 @@ process.once('unhandledRejection', exitWithError)
 async function main() {
   const app = render(React.createElement(App))
   await app.waitUntilExit()
+  // Force exit in case any stray handle (timers, watchers, subprocess stdio)
+  // is still keeping the event loop alive.
+  process.exit(process.exitCode ?? 0)
 }
 
 void main().catch(exitWithError)

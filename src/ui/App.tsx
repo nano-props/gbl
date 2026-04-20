@@ -1,35 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import Spinner from 'ink-spinner'
 import { Cron } from 'croner'
-import { useAppStore, getConfirmCallback, getInputCallback, selectIsInputBlocked } from '@/store/useAppStore.ts'
-import { isGitRepo } from '@/git/index.ts'
+import { useAppStore } from '@/store/useAppStore.ts'
+import { isActionInFlight } from '@/store/helpers.ts'
+import { isGitRepo } from '@/git/branches.ts'
 import { BranchesView } from '@/ui/views/BranchesView.tsx'
-import { WorktreesView } from '@/ui/views/WorktreesView.tsx'
-import { StashesView } from '@/ui/views/StashesView.tsx'
-import { CleanupView } from '@/ui/views/CleanupView.tsx'
 import { HelpView } from '@/ui/views/HelpView.tsx'
-import { Notification } from '@/ui/components/Notification.tsx'
-import { ConfirmDialog } from '@/ui/components/ConfirmDialog.tsx'
-import { InputDialog } from '@/ui/components/InputDialog.tsx'
+import { Header } from '@/ui/components/Header.tsx'
+import { useTerminalSize } from '@/ui/hooks/useTerminalSize.ts'
 
 const MIN_COLS = 80
 const MIN_ROWS = 20
-
-function useTerminalSize() {
-  const [size, setSize] = useState({
-    cols: process.stdout.columns ?? 80,
-    rows: process.stdout.rows ?? 24,
-  })
-  useEffect(() => {
-    const onResize = () => setSize({ cols: process.stdout.columns, rows: process.stdout.rows })
-    process.stdout.on('resize', onResize)
-    return () => {
-      process.stdout.off('resize', onResize)
-    }
-  }, [])
-  return size
-}
 
 export function App() {
   const { exit } = useApp()
@@ -62,18 +44,11 @@ function AppMain() {
   const { exit } = useApp()
   const currentView = useAppStore((s) => s.currentView)
   const branches = useAppStore((s) => s.branches)
-  const notification = useAppStore((s) => s.notification)
-  const busyMessage = useAppStore((s) => s.busyMessage)
-  const confirmDialog = useAppStore((s) => s.confirmDialog)
-  const inputDialog = useAppStore((s) => s.inputDialog)
+  const isLoaded = useAppStore((s) => s.isLoaded)
   const refreshAll = useAppStore((s) => s.refreshAll)
-  const closeConfirm = useAppStore((s) => s.closeConfirm)
-  const closeInput = useAppStore((s) => s.closeInput)
-
-  const isInputBlocked = useAppStore(selectIsInputBlocked)
 
   useInput((input) => {
-    if (input === 'q' && !isInputBlocked) {
+    if (input === 'q') {
       exit()
     }
   })
@@ -92,8 +67,6 @@ function AppMain() {
       if (cancelled) return
       if (!ok) {
         // Error message must be printed after terminal is restored.
-        // The 'exit' handler in main.ts restores the alternate screen first (registered earlier),
-        // then this handler prints the error to the now-visible normal screen.
         process.exitCode = 1
         process.once('exit', () => {
           process.stderr.write('Not a git repository. Run gbl from inside a git repo.\n')
@@ -103,6 +76,10 @@ function AppMain() {
       }
       refreshAll({ fetch: true })
       job = new Cron('* * * * *', () => {
+        // Skip the periodic refresh while a user action is running: the cron's
+        // "Fetching remotes..." spinner would otherwise overwrite the action's
+        // own busyMessage mid-operation.
+        if (isActionInFlight()) return
         refreshAll({ fetch: true })
       })
     })
@@ -116,83 +93,39 @@ function AppMain() {
     switch (currentView) {
       case 'branches':
         return <BranchesView />
-      case 'worktrees':
-        return <WorktreesView />
-      case 'stashes':
-        return <StashesView />
-      case 'cleanup':
-        return <CleanupView />
       case 'help':
         return <HelpView />
     }
   }
 
-  return (
-    <Box flexDirection="column">
-      {/* Header */}
-      <Box paddingX={1} marginBottom={1} justifyContent="space-between">
-        <Box>
-          <Text bold color="cyan">
-            GBL
-          </Text>
-          <Text dimColor> - Git Branch List</Text>
-        </Box>
-        {busyMessage ? (
-          <Text dimColor>
-            <Text color="cyan">
-              <Spinner type="dots" />
-            </Text>{' '}
-            {busyMessage}
-          </Text>
-        ) : notification ? (
-          <Notification type={notification.type} message={notification.message} />
-        ) : null}
-      </Box>
-
-      {/* Main View */}
-      {branches.length === 0 ? (
+  const renderMain = () => {
+    if (!isLoaded) {
+      return (
         <Box paddingX={1}>
           <Text color="cyan">
             <Spinner type="dots" />
           </Text>
         </Box>
-      ) : (
-        renderView()
-      )}
-
-      {/* Confirm Dialog */}
-      {confirmDialog && (
-        <Box paddingX={1} marginTop={1}>
-          <ConfirmDialog
-            title={confirmDialog.title}
-            message={confirmDialog.message}
-            onConfirm={() => {
-              getConfirmCallback()?.()
-              closeConfirm()
-            }}
-            onCancel={closeConfirm}
-          />
+      )
+    }
+    if (currentView === 'branches' && branches.length === 0) {
+      return (
+        <Box paddingX={1} flexDirection="column">
+          <Text color="yellow">No branches yet.</Text>
+          <Text dimColor>Make your first commit to create a branch.</Text>
+          <Text dimColor>Press q to quit.</Text>
         </Box>
-      )}
+      )
+    }
+    return renderView()
+  }
 
-      {/* Input Dialog */}
-      {inputDialog && (
-        <Box paddingX={1} marginTop={1}>
-          <InputDialog
-            key={inputDialog.title}
-            title={inputDialog.title}
-            placeholder={inputDialog.placeholder}
-            allowEmpty={inputDialog.allowEmpty}
-            defaultValue={inputDialog.defaultValue}
-            onSubmit={(value) => {
-              const cb = getInputCallback()
-              closeInput()
-              cb?.(value)
-            }}
-            onCancel={closeInput}
-          />
-        </Box>
-      )}
+  return (
+    <Box flexDirection="column" flexGrow={1}>
+      <Header />
+      <Box flexDirection="column" flexGrow={1}>
+        {renderMain()}
+      </Box>
     </Box>
   )
 }

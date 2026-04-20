@@ -1,7 +1,6 @@
 export interface BranchInfo {
   name: string
   isCurrent: boolean
-  isRemote: boolean
   tracking?: string
   trackingGone?: boolean
   ahead: number
@@ -14,27 +13,21 @@ export interface BranchInfo {
   worktreeDirty?: boolean
 }
 
-export interface StatusEntry {
-  x: string
-  y: string
-  path: string
-}
-
 export interface WorktreeInfo {
   path: string
-  head: string
   branch?: string
-  isMainWorktree: boolean
   isBare: boolean
-  isLocked: boolean
   isDirty?: boolean
-  statusFiles?: StatusEntry[]
+  changeCount?: number
 }
 
-export interface StashEntry {
-  index: number
-  message: string
-  subject: string
+export interface StatusEntry {
+  /** Index (staged) status character. */
+  x: string
+  /** Working-tree (unstaged) status character. */
+  y: string
+  /** Path relative to the worktree root. */
+  path: string
 }
 
 export interface LogEntry {

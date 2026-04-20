@@ -8,10 +8,10 @@ interface NotificationProps {
 
 export function Notification({ type, message }: NotificationProps) {
   const color = type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue'
-  const icon = type === 'success' ? 'v' : type === 'error' ? 'x' : 'i'
+  const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'
   return (
-    <Text color={color} bold>
-      [{icon}] {message}
+    <Text color={color} wrap="truncate-end">
+      {icon} {message}
     </Text>
   )
 }

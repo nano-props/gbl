@@ -2,59 +2,19 @@ import React from 'react'
 import { Box, Text, useInput } from 'ink'
 import { useAppStore } from '@/store/useAppStore.ts'
 
-const CATEGORIES = [
-  {
-    title: 'Branch View',
-    color: 'green',
-    bindings: [
-      ['Up/Down', 'Move selection'],
-      ['Enter', 'Checkout selected branch'],
-      ['p', 'Pull selected branch'],
-      ['P', 'Push selected branch'],
-      ['/', 'Search/filter branches'],
-      ['l', 'Toggle commit log'],
-      ['w', 'Worktree panel (toggle/create)'],
-      ['g', 'Open GitHub repo page'],
-    ],
-  },
-  {
-    title: 'Navigation',
-    color: 'cyan',
-    bindings: [
-      ['Tab', 'Open actions menu'],
-      ['Esc', 'Back to branches'],
-      ['?', 'Help'],
-      ['q', 'Quit'],
-    ],
-  },
-  {
-    title: 'Worktree View',
-    color: 'yellow',
-    bindings: [
-      ['d', 'Remove selected worktree'],
-      ['p', 'Prune stale worktrees'],
-      ['o', 'Open worktree directory'],
-    ],
-  },
-  {
-    title: 'Stash View',
-    color: 'magenta',
-    bindings: [
-      ['s', 'Save new stash'],
-      ['a', 'Apply (pop) selected stash'],
-      ['d', 'Drop selected stash'],
-    ],
-  },
-  {
-    title: 'Cleanup View (via Tab menu)',
-    color: 'red',
-    bindings: [
-      ['d', 'Dry run (preview)'],
-      ['c', 'Execute git clean'],
-      ['r', 'Remove build artifacts'],
-    ],
-  },
-] as const
+const BINDINGS: Array<[string, string]> = [
+  ['↑ / ↓', 'move selection'],
+  ['PgUp/PgDn', 'jump one page'],
+  ['Home/End', 'jump to first / last'],
+  ['⏎', 'checkout selected branch'],
+  ['p / P', 'pull / push selected branch'],
+  ['f', 'fetch all remotes'],
+  ['l', 'toggle commit log'],
+  ['s', 'toggle git status'],
+  ['g', 'open GitHub repo'],
+  ['?', 'toggle this help'],
+  ['q', 'quit'],
+]
 
 export function HelpView() {
   const setCurrentView = useAppStore((s) => s.setCurrentView)
@@ -64,33 +24,22 @@ export function HelpView() {
   })
 
   return (
-    <Box flexDirection="column" paddingX={1}>
-      <Box marginBottom={1}>
-        <Text bold color="cyan">
-          Help - Keybindings
-        </Text>
-      </Box>
-
-      {CATEGORIES.map((cat) => (
-        <Box key={cat.title} flexDirection="column" marginBottom={1}>
-          <Text bold color={cat.color}>
-            {cat.title}
-          </Text>
-          {cat.bindings.map(([key, desc]) => (
-            <Box key={key + desc}>
-              <Box width={12}>
-                <Text bold color="yellow">
-                  {key}
-                </Text>
-              </Box>
-              <Text>{desc}</Text>
+    <Box flexDirection="column" paddingX={2} paddingY={1}>
+      <Text bold color="cyan">
+        keys
+      </Text>
+      <Box marginTop={1} flexDirection="column">
+        {BINDINGS.map(([key, desc]) => (
+          <Box key={key}>
+            <Box width={10}>
+              <Text color="yellow">{key}</Text>
             </Box>
-          ))}
-        </Box>
-      ))}
-
+            <Text dimColor>{desc}</Text>
+          </Box>
+        ))}
+      </Box>
       <Box marginTop={1}>
-        <Text dimColor>Press ? or Esc to go back</Text>
+        <Text dimColor>? or esc to go back</Text>
       </Box>
     </Box>
   )

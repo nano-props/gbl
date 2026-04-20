@@ -1,6 +1,6 @@
 import { git, gitResult } from './helper.ts'
 import type { ExecResult } from './helper.ts'
-import type { BranchInfo, StatusEntry, LogEntry, WorktreeInfo } from './types.ts'
+import type { BranchInfo, LogEntry, WorktreeInfo } from './types.ts'
 
 export async function isGitRepo(): Promise<boolean> {
   try {
@@ -11,9 +11,23 @@ export async function isGitRepo(): Promise<boolean> {
   }
 }
 
-export async function getCurrentBranch(): Promise<string> {
+export async function getRepoName(): Promise<string> {
   try {
-    return await git(['rev-parse', '--abbrev-ref', 'HEAD'])
+    const root = await git(['rev-parse', '--show-toplevel'])
+    if (!root) return ''
+    const idx = root.lastIndexOf('/')
+    return idx >= 0 ? root.slice(idx + 1) : root
+  } catch {
+    return ''
+  }
+}
+
+export async function getCurrentBranch(): Promise<string> {
+  // `symbolic-ref` fails on a detached HEAD, which is exactly what we want:
+  // `rev-parse --abbrev-ref HEAD` would return the literal string "HEAD"
+  // there, which then gets displayed as if it were a branch name.
+  try {
+    return await git(['symbolic-ref', '--short', 'HEAD'])
   } catch {
     return ''
   }
@@ -21,9 +35,9 @@ export async function getCurrentBranch(): Promise<string> {
 
 export async function getBranches(worktrees?: WorktreeInfo[]): Promise<BranchInfo[]> {
   try {
-    // In git format strings, %% is a literal %. So "%%SEP%%" outputs "%SEP%".
-    const GIT_SEP = '%%SEP%%' // used in --format (git escaping)
-    const SEP = '%SEP%' // the actual separator in output
+    // ASCII Unit Separator (0x1f): never appears in normal text, so it's safe
+    // against commit subjects or author names that contain our delimiter.
+    const SEP = '\x1f'
     const format = [
       '%(refname:short)',
       '%(objectname:short)',
@@ -32,7 +46,7 @@ export async function getBranches(worktrees?: WorktreeInfo[]): Promise<BranchInf
       '%(authorname)',
       '%(upstream:short)',
       '%(upstream:track)',
-    ].join(GIT_SEP)
+    ].join(SEP)
 
     const output = await git(['for-each-ref', `--format=${format}`, 'refs/heads/'])
 
@@ -60,8 +74,6 @@ export async function getBranches(worktrees?: WorktreeInfo[]): Promise<BranchInf
       const upstream = parts[5] ?? ''
       const track = parts[6] ?? ''
 
-      const isRemote = false
-
       let ahead = 0
       let behind = 0
       const aheadMatch = track.match(/ahead (\d+)/)
@@ -71,8 +83,7 @@ export async function getBranches(worktrees?: WorktreeInfo[]): Promise<BranchInf
 
       const branchInfo: BranchInfo = {
         name,
-        isCurrent: !isRemote && name === currentBranch,
-        isRemote,
+        isCurrent: name === currentBranch,
         ahead,
         behind,
         lastCommitHash: hash,
@@ -101,29 +112,22 @@ export async function getBranches(worktrees?: WorktreeInfo[]): Promise<BranchInf
   }
 }
 
-export async function getStatus(): Promise<StatusEntry[]> {
+export async function getStatus(): Promise<number> {
   try {
     const output = await git(['status', '--porcelain'])
-    if (!output) return []
-
-    return output
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => ({
-        x: line[0] ?? ' ',
-        y: line[1] ?? ' ',
-        path: line.slice(3),
-      }))
+    if (!output) return 0
+    return output.split('\n').filter(Boolean).length
   } catch {
-    return []
+    return 0
   }
 }
 
 export async function getLog(branch: string, count: number = 10): Promise<LogEntry[]> {
   try {
-    const GIT_SEP = '%%SEP%%'
-    const SEP = '%SEP%'
-    const format = [`%H`, `%h`, `%s`, `%an`, `%ar`].join(GIT_SEP)
+    // `git log` format honours `%x1f` as the Unit Separator byte, which is safe
+    // against subjects/author names that contain our delimiter verbatim.
+    const SEP = '\x1f'
+    const format = [`%H`, `%h`, `%s`, `%an`, `%ar`].join('%x1f')
     const output = await git(['log', `--format=${format}`, '-n', String(count), branch])
     if (!output) return []
 
@@ -147,36 +151,4 @@ export async function getLog(branch: string, count: number = 10): Promise<LogEnt
 
 export async function checkoutBranch(name: string): Promise<ExecResult> {
   return gitResult('checkout', name)
-}
-
-export async function createBranch(name: string, startPoint?: string): Promise<ExecResult> {
-  const args = ['checkout', '-b', name]
-  if (startPoint) args.push(startPoint)
-  return gitResult(...args)
-}
-
-export async function deleteBranch(name: string, force?: boolean): Promise<ExecResult> {
-  return gitResult('branch', force ? '-D' : '-d', name)
-}
-
-export async function deleteRemoteBranch(name: string): Promise<ExecResult> {
-  const slashIndex = name.indexOf('/')
-  if (slashIndex === -1) {
-    return { ok: false, message: `Invalid remote branch format: ${name}` }
-  }
-  const remote = name.slice(0, slashIndex)
-  const branch = name.slice(slashIndex + 1)
-  return gitResult('push', remote, '--delete', branch)
-}
-
-export async function renameBranch(oldName: string, newName: string): Promise<ExecResult> {
-  return gitResult('branch', '-m', oldName, newName)
-}
-
-export async function mergeBranch(branch: string): Promise<ExecResult> {
-  return gitResult('merge', branch)
-}
-
-export async function rebaseBranch(branch: string): Promise<ExecResult> {
-  return gitResult('rebase', branch)
 }
