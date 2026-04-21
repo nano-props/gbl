@@ -4,14 +4,13 @@ import { useAppStore } from '@/store/useAppStore.ts'
 
 const BINDINGS: Array<[string, string]> = [
   ['↑ / ↓', 'move selection'],
-  ['PgUp/PgDn', 'jump one page'],
-  ['Home/End', 'jump to first / last'],
-  ['⏎', 'checkout selected branch'],
+  ['⏎', 'checkout branch · open worktree in new terminal'],
   ['p / P', 'pull / push selected branch'],
   ['f', 'fetch all remotes'],
   ['l', 'toggle commit log'],
   ['s', 'toggle git status'],
   ['g', 'open GitHub repo'],
+  ['o', 'open pull request for selected branch'],
   ['?', 'toggle this help'],
   ['q', 'quit'],
 ]

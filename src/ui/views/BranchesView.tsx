@@ -16,8 +16,8 @@ export function BranchesView() {
   useBranchesKeymap(selectedBranch)
 
   return (
-    <Box flexDirection="column" flexGrow={1} paddingX={1}>
-      <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" flexGrow={1} justifyContent="space-between" paddingX={1}>
+      <Box flexDirection="column">
         <BranchesListPanel maxVisible={maxVisible} />
         {selectedBranch && <BranchDetail branch={selectedBranch} statusRowBudget={statusRowBudget} />}
       </Box>

@@ -1,9 +1,10 @@
 import { useInput } from 'ink'
 import open from 'open'
 import type { BranchInfo } from '@/git/types.ts'
-import { getGitHubUrl } from '@/git/remote.ts'
+import { getGitHubUrl, getPullRequestUrl } from '@/git/remote.ts'
 import { useAppStore } from '@/store/useAppStore.ts'
-import { useBranchesLayout } from './useBranchesLayout.ts'
+import { openPathInNewTerminal } from '@/utils/terminal.ts'
+import { tildifyHome } from '@/utils/path.ts'
 
 /**
  * Registers the key bindings for the branches view.
@@ -11,7 +12,6 @@ import { useBranchesLayout } from './useBranchesLayout.ts'
  */
 export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
   // Selectors — grouped by concern so each line is a pure store read.
-  const selectBranch = useAppStore((s) => s.selectBranch)
   const moveBranchSelection = useAppStore((s) => s.moveBranchSelection)
   const toggleShowLog = useAppStore((s) => s.toggleShowLog)
   const toggleShowStatus = useAppStore((s) => s.toggleShowStatus)
@@ -21,12 +21,6 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
   const doFetchAll = useAppStore((s) => s.doFetchAll)
   const setCurrentView = useAppStore((s) => s.setCurrentView)
   const showNotification = useAppStore((s) => s.showNotification)
-
-  // Derived values.
-  const { maxVisible } = useBranchesLayout()
-  // Page step: skip ~one screenful of rows, leaving a row of overlap so the
-  // user can see the previous context line.
-  const pageStep = Math.max(1, maxVisible - 1)
 
   const openGitHub = async () => {
     try {
@@ -38,6 +32,22 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
     }
   }
 
+  const openPullRequest = async (branch: string) => {
+    try {
+      const url = await getPullRequestUrl(branch)
+      if (url) await open(url)
+      else showNotification('error', 'No GitHub URL found')
+    } catch {
+      showNotification('error', 'Failed to open pull request')
+    }
+  }
+
+  const openWorktreeWindow = async (path: string) => {
+    const res = await openPathInNewTerminal(path)
+    if (res.ok) showNotification('success', `Opened "${tildifyHome(path)}"`)
+    else showNotification('error', `Open failed: ${res.message}`)
+  }
+
   useInput((input, key) => {
     if (key.upArrow) {
       moveBranchSelection(-1)
@@ -47,27 +57,13 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
       moveBranchSelection(1)
       return
     }
-    if (key.pageUp) {
-      moveBranchSelection(-pageStep)
-      return
-    }
-    if (key.pageDown) {
-      moveBranchSelection(pageStep)
-      return
-    }
-    if (key.home) {
-      selectBranch(0)
-      return
-    }
-    if (key.end) {
-      // `selectBranch` itself clamps against the branches array — a large
-      // sentinel is simpler than re-deriving the length here.
-      selectBranch(Number.MAX_SAFE_INTEGER)
-      return
-    }
 
     if (key.return && selectedBranch) {
-      doCheckout(selectedBranch.name)
+      if (selectedBranch.worktreePath) {
+        openWorktreeWindow(selectedBranch.worktreePath)
+      } else {
+        doCheckout(selectedBranch.name)
+      }
       return
     }
     if (input === 'p' && selectedBranch) {
@@ -96,6 +92,10 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
     }
     if (input === 'g') {
       openGitHub()
+      return
+    }
+    if (input === 'o' && selectedBranch) {
+      openPullRequest(selectedBranch.name)
       return
     }
   })

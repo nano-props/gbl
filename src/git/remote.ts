@@ -39,6 +39,22 @@ export async function getGitHubUrl(): Promise<string | null> {
   }
 }
 
+/**
+ * URL for the PR associated with `branch`. GitHub redirects
+ * `/pull/<branch>` to the open PR if there is exactly one, or to the
+ * compare/new-PR page otherwise — so one URL handles both "view" and
+ * "create" without needing API access.
+ */
+export async function getPullRequestUrl(branch: string): Promise<string | null> {
+  const repoUrl = await getGitHubUrl()
+  if (!repoUrl) return null
+  // Encode each segment so unusual chars are escaped, but keep `/` literal —
+  // GitHub matches `/pull/<branch>` against the full branch name, and an
+  // encoded `%2F` won't match a branch like `feat/foo`.
+  const encoded = branch.split('/').map(encodeURIComponent).join('/')
+  return `${repoUrl}/pull/${encoded}`
+}
+
 export async function fetchAll(): Promise<ExecResult> {
   return gitResult('fetch', '--all', '--prune')
 }

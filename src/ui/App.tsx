@@ -37,10 +37,10 @@ export function App() {
     )
   }
 
-  return <AppMain />
+  return <AppMain rows={rows} />
 }
 
-function AppMain() {
+function AppMain({ rows }: { rows: number }) {
   const { exit } = useApp()
   const currentView = useAppStore((s) => s.currentView)
   const branches = useAppStore((s) => s.branches)
@@ -121,7 +121,7 @@ function AppMain() {
   }
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" height={rows}>
       <Header />
       <Box flexDirection="column" flexGrow={1}>
         {renderMain()}

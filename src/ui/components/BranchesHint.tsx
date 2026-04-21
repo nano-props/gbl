@@ -7,7 +7,9 @@ import { Box, Text } from 'ink'
 export function BranchesHint() {
   return (
     <Box marginTop={1} paddingX={1}>
-      <Text dimColor>? help · q quit</Text>
+      <Text dimColor wrap="truncate-end">
+        ↑↓ move · ⏎ checkout/open wt · p pull · P push · s status · l log · ? help · q quit
+      </Text>
     </Box>
   )
 }
