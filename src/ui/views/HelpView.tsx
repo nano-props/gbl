@@ -4,7 +4,8 @@ import { useAppStore } from '@/store/useAppStore.ts'
 
 const BINDINGS: Array<[string, string]> = [
   ['↑ / ↓', 'move selection'],
-  ['⏎', 'checkout branch · open worktree in new terminal'],
+  ['⏎', 'checkout branch · open worktree in new tab'],
+  ['⌥ ⏎', 'open worktree in new window'],
   ['p / P', 'pull / push selected branch'],
   ['f', 'fetch all remotes'],
   ['l', 'toggle commit log'],

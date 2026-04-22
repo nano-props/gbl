@@ -4,18 +4,24 @@ import { promisify } from 'util'
 const execFileAsync = promisify(execFileCb)
 
 export type OpenResult = { ok: boolean; message: string }
+export type OpenMode = 'tab' | 'window'
 
 /**
- * Open `path` in a new window of the user's current terminal (macOS only).
+ * Open `path` in the user's current terminal (macOS only).
+ *
+ * `mode` picks between a new tab and a new window. Only Ghostty honors
+ * `tab` today — Terminal.app's `do script` always spawns a new window,
+ * and the generic `open -a` fallback can't target tabs reliably.
  *
  * Detection strategy: trust `$TERM_PROGRAM` to pick a known AppleScript
  * recipe (Terminal.app, Ghostty). For anything else — or when the env
  * var is missing — fall back to `open -a Terminal`, which is guaranteed
- * to exist on macOS. AppleScript is used for the known apps because
- * `open -a` reuses an existing window instead of reliably creating a
- * new one.
+ * to exist on macOS.
  */
-export async function openPathInNewTerminal(path: string): Promise<OpenResult> {
+export async function openPathInNewTerminal(
+  path: string,
+  mode: OpenMode = 'tab',
+): Promise<OpenResult> {
   if (process.platform !== 'darwin') {
     return { ok: false, message: 'Opening a new terminal is only supported on macOS' }
   }
@@ -36,17 +42,35 @@ export async function openPathInNewTerminal(path: string): Promise<OpenResult> {
       return { ok: true, message: '' }
     }
     if (termProgram === 'ghostty') {
-      // Ghostty exposes a `new window` AppleScript command whose
-      // `configuration` record accepts an `initial working directory`.
-      // This is the officially supported way to open a new window in a
-      // running Ghostty instance on macOS. Requires the user's config to
-      // allow AppleScript (`macos-applescript = ask|allow`); otherwise
+      // Ghostty exposes `new tab` and `new window` AppleScript commands,
+      // both of which accept a `configuration` record with an
+      // `initial working directory`. Requires the user's config to allow
+      // AppleScript (`macos-applescript = ask|allow`); otherwise
       // osascript returns an error which we surface via the notification.
+      //
+      // `new tab` needs an existing Ghostty window to attach to — if
+      // none is open Ghostty raises "Failed to create tab." and we
+      // fall back to `new window`. Other errors (permission denied,
+      // etc.) are propagated as-is.
       //
       // The path is embedded as an AppleScript string literal (double
       // quotes), so we escape `\` and `"` for that context — NOT shell
       // quoting, because AppleScript passes it to the app directly.
       const asString = appleScriptString(path)
+      if (mode === 'tab') {
+        try {
+          await runOsascript([
+            `tell application "Ghostty"`,
+            `  activate`,
+            `  new tab with configuration {initial working directory:${asString}}`,
+            `end tell`,
+          ])
+          return { ok: true, message: '' }
+        } catch (err: unknown) {
+          if (!isNoParentWindowError(err)) throw err
+          // No existing Ghostty window — fall through to `new window`.
+        }
+      }
       await runOsascript([
         `tell application "Ghostty"`,
         `  activate`,
@@ -83,4 +107,14 @@ function shellSingleQuote(s: string): string {
 // AppleScript string literal: wrap in double quotes and escape `\` and `"`.
 function appleScriptString(s: string): string {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+// Ghostty's `new tab` handler raises this exact string when no parent
+// window is available to host the new tab. Matching on the message is
+// the only signal we get from osascript — the AppleScript error number
+// (-10000 / errAEEventFailed) is shared with unrelated failures.
+function isNoParentWindowError(err: unknown): boolean {
+  const e = err as { stderr?: string; message?: string }
+  const text = `${e.stderr ?? ''} ${e.message ?? ''}`
+  return text.includes('Failed to create tab.')
 }

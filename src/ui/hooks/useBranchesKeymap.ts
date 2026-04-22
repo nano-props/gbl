@@ -3,7 +3,7 @@ import open from 'open'
 import type { BranchInfo } from '@/git/types.ts'
 import { getGitHubUrl, getPullRequestUrl } from '@/git/remote.ts'
 import { useAppStore } from '@/store/useAppStore.ts'
-import { openPathInNewTerminal } from '@/utils/terminal.ts'
+import { openPathInNewTerminal, type OpenMode } from '@/utils/terminal.ts'
 import { tildifyHome } from '@/utils/path.ts'
 
 /**
@@ -42,8 +42,8 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
     }
   }
 
-  const openWorktreeWindow = async (path: string) => {
-    const res = await openPathInNewTerminal(path)
+  const openWorktree = async (path: string, mode: OpenMode) => {
+    const res = await openPathInNewTerminal(path, mode)
     if (res.ok) showNotification('success', `Opened "${tildifyHome(path)}"`)
     else showNotification('error', `Open failed: ${res.message}`)
   }
@@ -60,7 +60,11 @@ export function useBranchesKeymap(selectedBranch: BranchInfo | null): void {
 
     if (key.return && selectedBranch) {
       if (selectedBranch.worktreePath) {
-        openWorktreeWindow(selectedBranch.worktreePath)
+        // Option+Enter → new window. Plain Enter → new tab.
+        // `shift` can't be detected on Enter in a terminal (both keys
+        // emit the same byte); `meta` works because Option+Enter sends
+        // ESC+CR, which Ink parses as a meta modifier.
+        openWorktree(selectedBranch.worktreePath, key.meta ? 'window' : 'tab')
       } else {
         doCheckout(selectedBranch.name)
       }
